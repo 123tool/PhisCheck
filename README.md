@@ -3,8 +3,11 @@
 ---
 
 **PhisCheck** adalah sebuah platform simulasi dasbor pemantauan intelijen ancaman (*Threat Intelligence Monitor*) yang dikemas dalam antarmuka konsol peretas (*Hacker Console*) berbasis web.
-Alat ini dirancang khusus untuk mensimulasikan bagaimana seorang analis keamanan siber (*Cyber Security Analyst*) atau tim OSINT melacak, menyaring, dan memitigasi ancaman digital secara realtime. Fokus utama dari PhisCheck adalah memantau pergerakan pendaftaran domain mencurigakan di internet yang berpotensi digunakan untuk aksi **Phishing**, **Typosquatting** (pelesetan nama domain), maupun penipuan online yang menargetkan *brand* atau institusi besar.
-Dengan memadukan konsep visual retro CRT monitor dan sistem log otomatis, PhisCheck memberikan gambaran visual bagaimana data mentah dari jaringan global (seperti *Certstream Pipeline* dan *Opensquat API*) diolah menjadi indikator ancaman yang siap dianalisis.
+
+Alat ini dirancang khusus untuk mensimulasikan bagaimana seorang analis keamanan siber (*Cyber Security Analyst*) atau tim OSINT melacak, menyaring, dan memitigasi ancaman digital secara realtime.
+
+Fokus utama dari PhisCheck adalah memantau pergerakan pendaftaran domain mencurigakan di internet yang berpotensi digunakan untuk aksi **Phishing**, **Typosquatting** (pelesetan nama domain), maupun penipuan online yang menargetkan *brand* atau institusi besar.
+
 
 ---
 
