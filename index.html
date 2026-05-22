@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phishing Monitor - Detection</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1>🛡️ Phishing Monitor</h1>
+                    <span class="header-subtitle">Monitor Domain Detection</span>
+                </div>
+                <div class="header-right">
+                    <div class="status-indicators">
+                        <div class="status-item">
+                            <span class="status-label">Certstream</span>
+                            <div id="certstream-status" class="status-dot status-offline"></div>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Opensquat</span>
+                            <div id="opensquat-status" class="status-dot status-offline"></div>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Email</span>
+                            <div id="email-status" class="status-dot status-offline"></div>
+                        </div>
+                    </div>
+                    <button id="settings-btn" class="btn btn--secondary">⚙️ Settings</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Grid -->
+        <main class="dashboard-grid">
+            <!-- Control Panel -->
+            <section class="card control-panel">
+                <div class="card-header">
+                    <h3>Domain Monitoring</h3>
+                </div>
+                <div class="card-body">
+                    <form id="domain-form" class="domain-form">
+                        <div class="form-group">
+                            <label for="domain-input">Add Domain to Monitor:</label>
+                            <div class="input-group">
+                                <input type="text" id="domain-input" class="form-control" 
+                                       placeholder="e.g., paypal, amazon, google" required>
+                                <button type="submit" class="btn btn--primary">Add Domain</button>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <div class="monitored-domains">
+                        <h4>Monitored Domains (<span id="domains-count">0</span>)</h4>
+                        <div id="domains-list" class="domains-list"></div>
+                    </div>
+
+                    <div class="api-status">
+                        <h4>API Usage</h4>
+                        <div class="usage-item">
+                            <span>Opensquat queries today:</span>
+                            <span id="opensquat-usage" class="usage-count">0/5</span>
+                        </div>
+                        <div class="usage-item">
+                            <span>Next check:</span>
+                            <span id="next-check" class="usage-time">--:--</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Certstream Feed Panel -->
+            <section class="card certstream-feed">
+                <div class="card-header">
+                    <h3>🔴 Live Certstream Feed</h3>
+                    <div class="feed-controls">
+                        <button id="pause-certstream" class="btn btn--sm btn--secondary">⏸️ Pause</button>
+                        <button id="clear-certstream" class="btn btn--sm btn--outline">Clear</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="feed-stats">
+                        <span>Processed: <strong id="certstream-processed">0</strong></span>
+                        <span>Matched: <strong id="certstream-matched">0</strong></span>
+                    </div>
+                    <div id="certstream-feed" class="threat-feed">
+                        <div class="empty-state">
+                            <p>Waiting for matching certificates...</p>
+                            <p class="feed-note">Only certificates matching your monitored domains will appear here.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Opensquat Feed Panel -->
+            <section class="card opensquat-feed">
+                <div class="card-header">
+                    <h3>📊 Opensquat Feed</h3>
+                    <div class="feed-controls">
+                        <button id="refresh-opensquat" class="btn btn--sm btn--secondary">🔄 Refresh</button>
+                        <button id="clear-opensquat" class="btn btn--sm btn--outline">Clear</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="feed-stats">
+                        <span>Last check: <strong id="opensquat-last-check">Never</strong></span>
+                        <span>Found: <strong id="opensquat-found">0</strong></span>
+                    </div>
+                    <div id="opensquat-feed" class="threat-feed">
+                        <div class="empty-state">
+                            <p>No Opensquat data yet...</p>
+                            <p class="feed-note">Newly registered suspicious domains will appear here.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Unified Threats Panel -->
+            <section class="card threats-panel">
+                <div class="card-header">
+                    <h3>⚠️ All Detected Threats</h3>
+                    <div class="threat-count">
+                        <span class="status status--error" id="threat-count">0 Threats</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="threat-filters">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="certstream">Certstream</button>
+                        <button class="filter-btn" data-filter="opensquat">Opensquat</button>
+                        <button class="filter-btn" data-filter="high">High Risk</button>
+                    </div>
+                    <div id="threats-list" class="threats-list">
+                        <div class="empty-state">
+                            <p>No threats detected yet. Monitoring will begin once you add domains to watch.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Statistics Panel -->
+            <section class="card stats-panel">
+                <div class="card-header">
+                    <h3>📈 Statistics</h3>
+                </div>
+                <div class="card-body">
+                    <div class="stats-grid">
+                        <div class="stat-item stat-certstream">
+                            <div class="stat-number" id="certstream-stats">0</div>
+                            <div class="stat-label">Certstream Matches</div>
+                        </div>
+                        <div class="stat-item stat-opensquat">
+                            <div class="stat-number" id="opensquat-stats">0</div>
+                            <div class="stat-label">Opensquat Findings</div>
+                        </div>
+                        <div class="stat-item stat-threats">
+                            <div class="stat-number" id="total-threats">0</div>
+                            <div class="stat-label">Total Threats</div>
+                        </div>
+                        <div class="stat-item stat-alerts">
+                            <div class="stat-number" id="alerts-sent">0</div>
+                            <div class="stat-label">Alerts Sent</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Recent Activity Log -->
+            <section class="card activity-log">
+                <div class="card-header">
+                    <h3>📋 Recent Activity</h3>
+                    <button id="export-data" class="btn btn--sm btn--outline">📤 Export</button>
+                </div>
+                <div class="card-body">
+                    <div id="activity-feed" class="activity-feed"></div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Settings Modal -->
+        <div id="settings-modal" class="modal hidden">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Settings</h3>
+                    <button id="close-settings" class="btn btn--outline">✕</button>
+                </div>
+                <div class="modal-body">
+                    <div class="settings-tabs">
+                        <button class="tab-btn active" data-tab="email">Email Alerts</button>
+                        <button class="tab-btn" data-tab="monitoring">Monitoring</button>
+                        <button class="tab-btn" data-tab="opensquat">Opensquat</button>
+                        <button class="tab-btn" data-tab="export">Export Data</button>
+                    </div>
+
+                    <!-- Email Settings Tab -->
+                    <div id="email-tab" class="tab-content active">
+                        <form id="email-settings-form">
+                            <div class="form-group">
+                                <label for="emailjs-service">EmailJS Service ID:</label>
+                                <input type="text" id="emailjs-service" class="form-control" 
+                                       placeholder="your_service_id">
+                            </div>
+                            <div class="form-group">
+                                <label for="emailjs-template">EmailJS Template ID:</label>
+                                <input type="text" id="emailjs-template" class="form-control" 
+                                       placeholder="your_template_id">
+                            </div>
+                            <div class="form-group">
+                                <label for="emailjs-key">EmailJS Public Key:</label>
+                                <input type="text" id="emailjs-key" class="form-control" 
+                                       placeholder="your_public_key">
+                            </div>
+                            <div class="form-group">
+                                <label for="alert-email">Alert Email Address:</label>
+                                <input type="email" id="alert-email" class="form-control" 
+                                       placeholder="your@email.com">
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn--primary">Save Email Settings</button>
+                                <button type="button" id="test-email" class="btn btn--secondary">Send Test Email</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Monitoring Settings Tab -->
+                    <div id="monitoring-tab" class="tab-content">
+                        <div class="form-group">
+                            <label for="similarity-threshold">Domain Similarity Threshold:</label>
+                            <input type="range" id="similarity-threshold" min="0.6" max="1" step="0.05" value="0.75" class="form-control">
+                            <span id="threshold-value">75%</span>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="auto-alerts" checked> 
+                                Enable Automatic Email Alerts
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="sound-alerts" checked> 
+                                Enable Sound Notifications
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="certstream-filtering" checked> 
+                                Enable Certstream Domain Filtering
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Opensquat Settings Tab -->
+                    <div id="opensquat-tab" class="tab-content">
+                        <div class="form-group">
+                            <label for="opensquat-interval">Check Interval (minutes):</label>
+                            <select id="opensquat-interval" class="form-control">
+                                <option value="20">20 minutes</option>
+                                <option value="30">30 minutes</option>
+                                <option value="60">1 hour</option>
+                                <option value="120">2 hours</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="opensquat-enabled" checked> 
+                                Enable Opensquat Monitoring
+                            </label>
+                        </div>
+                        <div class="usage-info">
+                            <h4>API Usage Limits</h4>
+                            <p>Free tier: 5 queries per day</p>
+                            <p>Current usage: <span id="current-usage">0/5</span></p>
+                            <button id="reset-usage" class="btn btn--sm btn--outline">Reset Usage Counter</button>
+                        </div>
+                    </div>
+
+                    <!-- Export Data Tab -->
+                    <div id="export-tab" class="tab-content">
+                        <div class="export-options">
+                            <button id="export-threats" class="btn btn--outline">Export All Threats (JSON)</button>
+                            <button id="export-certstream" class="btn btn--outline">Export Certstream Data</button>
+                            <button id="export-opensquat" class="btn btn--outline">Export Opensquat Data</button>
+                            <button id="export-domains" class="btn btn--outline">Export Monitored Domains</button>
+                            <button id="export-logs" class="btn btn--outline">Export Activity Logs</button>
+                            <button id="clear-all-data" class="btn btn--outline btn--danger">Clear All Data</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Threat Detail Modal -->
+        <div id="threat-detail-modal" class="modal hidden">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Threat Details</h3>
+                    <button id="close-threat-detail" class="btn btn--outline">✕</button>
+                </div>
+                <div class="modal-body">
+                    <div id="threat-detail-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+                              </html>
